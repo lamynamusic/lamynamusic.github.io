@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>lamyna</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black: #080808;
+      --white: #f0ece4;
+      --dim: rgba(240, 236, 228, 0.15);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── WORDMARK ── */
+    .wordmark {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--white);
+      position: fixed;
+      z-index: 100;
+      white-space: nowrap;
+      visibility: hidden;
+      opacity: 0;
+      /* JS controls position via inline style */
+      transition: font-size 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .wordmark.ready {
+      visibility: visible;
+      animation: fadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 2rem;
+      right: 2.5rem;
+      z-index: 100;
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
+      transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s;
+    }
+
+    body.scrolled nav {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .nav-dropdown { position: relative; }
+
+    .nav-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(240, 236, 228, 0.4);
+      cursor: default;
+      transition: color 0.3s;
+      display: block;
+      padding-bottom: 0.8rem;
+    }
+
+    .nav-dropdown:hover .nav-label { color: var(--white); }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      min-width: 160px;
+      padding: 0.8rem 0 0;
+      opacity: 0;
+      transform: translateY(-6px);
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .nav-dropdown:hover .dropdown-menu {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .dropdown-menu::before {
+      content: '';
+      display: block;
+      width: 100%;
+      height: 1px;
+      background: rgba(240, 236, 228, 0.08);
+      margin-bottom: 0.6rem;
+    }
+
+    .dropdown-menu a {
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      color: rgba(240, 236, 228, 0.35);
+      text-decoration: none;
+      text-align: right;
+      padding: 0.15rem 0;
+      transition: color 0.3s;
+    }
+
+    .dropdown-menu a:hover { color: var(--white); }
+
+    /* ── HERO ── */
+    #hero {
+      height: 100vh;
+      position: relative;
+    }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(240, 236, 228, 0.2);
+      opacity: 0;
+      animation: fadeIn 1s ease 2.2s forwards;
+    }
+
+    /* ── BIO ── */
+    #bio {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8rem 2rem 6rem;
+    }
+
+    .bio-text {
+      max-width: 560px;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+
+    .bio-text.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .bio-text p {
+      font-size: clamp(1rem, 2.2vw, 1.15rem);
+      font-weight: 300;
+      line-height: 1.85;
+      color: rgba(240, 236, 228, 0.75);
+      text-align: center;
+    }
+
+    .bio-text p + p { margin-top: 1.4em; }
+
+    .presave-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5em;
+      margin-top: 2.5em;
+      padding-top: 2em;
+      border-top: 1px solid rgba(240, 236, 228, 0.08);
+    }
+
+    .single-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      letter-spacing: -0.02em;
+      color: var(--white);
+    }
+
+    .single-sub {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(240, 236, 228, 0.35);
+    }
+
+    .presave-btn {
+      display: inline-block;
+      margin-top: 0.8em;
+      padding: 0.55em 1.6em;
+      border: 1px solid rgba(240, 236, 228, 0.25);
+      border-radius: 2em;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(240, 236, 228, 0.6);
+      text-decoration: none;
+      transition: border-color 0.3s, color 0.3s;
+    }
+
+    .presave-btn:hover {
+      border-color: var(--white);
+      color: var(--white);
+    }
+
+    /* ── SOCIALS ── */
+    #socials {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 2rem;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      pointer-events: none;
+    }
+
+    body.scrolled #socials {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .social-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(240, 236, 228, 0.3);
+      text-decoration: none;
+      padding: 0.4rem;
+      transition: color 0.4s ease;
+    }
+
+    .social-link:hover { color: var(--white); }
+    .social-link svg { width: 20px; height: 20px; fill: currentColor; }
+
+
+    /* ── LYRICS OVERLAY ── */
+    #lyrics-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--black);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 6rem 2rem 4rem;
+      overflow-y: auto;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+
+    #lyrics-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .lyrics-close {
+      position: fixed;
+      top: 2rem;
+      right: 2.5rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(240, 236, 228, 0.35);
+      cursor: pointer;
+      transition: color 0.3s;
+      background: none;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .lyrics-close:hover { color: var(--white); }
+
+    .lyrics-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      letter-spacing: -0.02em;
+      color: var(--white);
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    .lyrics-body {
+      max-width: 480px;
+      width: 100%;
+    }
+
+    .lyrics-body p {
+      font-size: clamp(0.95rem, 2vw, 1.05rem);
+      font-weight: 300;
+      line-height: 1.9;
+      color: rgba(240, 236, 228, 0.7);
+      margin-bottom: 1.6em;
+    }
+
+    .lyrics-body .stanza-break {
+      display: block;
+      height: 0.8em;
+    }
+
+    @keyframes fadeIn { to { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <h1 class="wordmark" id="wordmark">lamyna</h1>
+
+  <nav>
+    <div class="nav-dropdown">
+      <span class="nav-label">canzoni</span>
+      <div class="dropdown-menu">
+        <a href="#" onclick="openLyrics(); return false;">letto</a>
+      </div>
+    </div>
+  </nav>
+
+  <div id="socials">
+    <a class="social-link" href="https://www.instagram.com/lamyna.music" target="_blank" rel="noopener" aria-label="Instagram">
+      <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+    </a>
+    <a class="social-link" href="https://www.tiktok.com/@lamyna.music" target="_blank" rel="noopener" aria-label="TikTok">
+      <svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.75a4.85 4.85 0 0 1-1.01-.06z"/></svg>
+    </a>
+  </div>
+
+  <section id="hero">
+    <div class="scroll-hint">scorri</div>
+  </section>
+
+  <section id="bio">
+    <div class="bio-text">
+      <p>non sapevo come dirlo.</p>
+      <p>quindi ci ho scritto una canzone.</p>
+      <p class="presave-block">
+        <span class="single-title">letto</span>
+        <span class="single-sub">il mio primo singolo — fuori il 19 giugno</span>
+        <a class="presave-btn" href="https://distrokid.com/hyperfollow/lamyna/letto?ref=release" target="_blank" rel="noopener">pre-save</a>
+      </p>
+    </div>
+  </section>
+
+  <script>
+    const wordmark = document.getElementById('wordmark');
+    const bioText = document.querySelector('.bio-text');
+
+    const SMALL_SIZE = '1.4rem';
+    const BIG_SIZE = 'clamp(3.5rem, 11vw, 8rem)';
+    const DURATION = 800; // ms
+
+    let isScrolled = false;
+    let animating = false;
+    let rafId = null;
+
+    function getCenter() {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const w = wordmark.offsetWidth;
+      const h = wordmark.offsetHeight;
+      return {
+        left: (vw - w) / 2,
+        top: (vh - h) / 2
+      };
+    }
+
+    function getTopLeft() {
+      const remPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const navTop = 2 * remPx; // nav is at top: 2rem
+      // wordmark at SMALL_SIZE — measure its height
+      const tempSize = wordmark.style.fontSize;
+      wordmark.style.fontSize = SMALL_SIZE;
+      const h = wordmark.offsetHeight;
+      wordmark.style.fontSize = tempSize;
+      // nav label line-height ≈ 1em of 0.75rem
+      const navLabelH = 0.75 * remPx;
+      // center wordmark on nav label center
+      const navCenter = navTop + navLabelH / 2;
+      return { left: 40, top: Math.round(navCenter - h / 2) };
+    }
+
+    // Set position without transition
+    function setPos(pos, size) {
+      wordmark.style.transition = 'none';
+      wordmark.style.fontSize = size;
+      wordmark.style.left = pos.left + 'px';
+      wordmark.style.top = pos.top + 'px';
+      wordmark.style.transform = 'none';
+    }
+
+    // Animate to target
+    function animateTo(fromPos, fromSize, toPos, toSize, cb) {
+      if (animating) return;
+      animating = true;
+
+      // Force current state without transition
+      wordmark.style.transition = 'none';
+      wordmark.style.fontSize = fromSize;
+      wordmark.style.left = fromPos.left + 'px';
+      wordmark.style.top = fromPos.top + 'px';
+      wordmark.style.transform = 'none';
+
+      // Force reflow
+      wordmark.getBoundingClientRect();
+
+      // Now animate
+      wordmark.style.transition = `left ${DURATION}ms cubic-bezier(0.16,1,0.3,1), top ${DURATION}ms cubic-bezier(0.16,1,0.3,1), font-size ${DURATION}ms cubic-bezier(0.16,1,0.3,1)`;
+      wordmark.style.fontSize = toSize;
+      wordmark.style.left = toPos.left + 'px';
+      wordmark.style.top = toPos.top + 'px';
+
+      setTimeout(() => {
+        animating = false;
+        if (cb) cb();
+      }, DURATION + 50);
+    }
+
+    // Init: keep hidden, set size, wait two rAFs for layout to settle, then position & reveal
+    document.fonts.ready.then(() => {
+      wordmark.style.transition = 'none';
+      wordmark.style.fontSize = BIG_SIZE;
+      wordmark.style.transform = 'none';
+      // First rAF: size is applied
+      requestAnimationFrame(() => {
+        // Second rAF: layout is fully calculated
+        requestAnimationFrame(() => {
+          const c = getCenter();
+          wordmark.style.left = c.left + 'px';
+          wordmark.style.top = c.top + 'px';
+          wordmark.classList.add('ready');
+        });
+      });
+    });
+
+    window.addEventListener('scroll', () => {
+      const y = window.scrollY;
+
+      if (y > window.innerHeight * 0.3 && !isScrolled && !animating) {
+        isScrolled = true;
+        document.body.classList.add('scrolled');
+
+        const from = getCenter();
+        const to = getTopLeft();
+        animateTo(from, BIG_SIZE, to, SMALL_SIZE);
+
+      } else if (y <= window.innerHeight * 0.1 && isScrolled && !animating) {
+        isScrolled = false;
+        document.body.classList.remove('scrolled');
+
+        // Measure top-left position before resizing
+        const from = getTopLeft();
+
+        // To get center we need to temporarily set big size, measure, then animate
+        wordmark.style.transition = 'none';
+        wordmark.style.fontSize = BIG_SIZE;
+        wordmark.getBoundingClientRect();
+        const to = getCenter();
+
+        // Reset back to small for animation start
+        wordmark.style.fontSize = SMALL_SIZE;
+        wordmark.getBoundingClientRect();
+
+        animateTo(from, SMALL_SIZE, to, BIG_SIZE);
+      }
+
+      // Bio fade
+      const bioRect = bioText.getBoundingClientRect();
+      if (bioRect.top < window.innerHeight * 0.85) {
+        bioText.classList.add('visible');
+      }
+    });
+
+    // Reposition on resize
+    window.addEventListener('resize', () => {
+      if (!isScrolled) {
+        wordmark.style.transition = 'none';
+        wordmark.style.fontSize = BIG_SIZE;
+        requestAnimationFrame(() => {
+          const c = getCenter();
+          wordmark.style.left = c.left + 'px';
+          wordmark.style.top = c.top + 'px';
+        });
+      }
+    });
+
+    function openLyrics() {
+      document.getElementById('lyrics-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLyrics() {
+      document.getElementById('lyrics-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    // Close with Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeLyrics();
+    });
+
+  </script>
+
+  <!-- Lyrics overlay -->
+  <div id="lyrics-overlay">
+    <button class="lyrics-close" onclick="closeLyrics()">chiudi</button>
+    <h2 class="lyrics-title">letto</h2>
+    <div class="lyrics-body">
+    </div>
+  </div>
+
+</body>
+</html>
