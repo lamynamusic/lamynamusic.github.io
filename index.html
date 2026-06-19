@@ -86,6 +86,9 @@
       top: 2rem;
       right: 2.5rem;
       z-index: 100;
+      display: flex;
+      align-items: flex-start;
+      gap: 2rem;
       opacity: 0;
       transform: translateY(-8px);
       pointer-events: none;
@@ -97,6 +100,17 @@
       transform: translateY(0);
       pointer-events: auto;
     }
+
+    .nav-link {
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(240, 236, 228, 0.4);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    .nav-link:hover { color: var(--white); }
 
     .nav-dropdown { position: relative; }
 
@@ -230,23 +244,63 @@
       color: rgba(240, 236, 228, 0.35);
     }
 
-    .presave-btn {
+    .platform-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.7em;
+      margin-top: 1em;
+    }
+
+    .platform-links a {
       display: inline-block;
-      margin-top: 0.8em;
-      padding: 0.55em 1.6em;
+      padding: 0.55em 1.4em;
       border: 1px solid rgba(240, 236, 228, 0.25);
       border-radius: 2em;
       font-size: 0.72rem;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       color: rgba(240, 236, 228, 0.6);
       text-decoration: none;
-      transition: border-color 0.3s, color 0.3s;
+      transition: border-color 0.3s, color 0.3s, background 0.3s;
     }
 
-    .presave-btn:hover {
+    .platform-links a:hover {
       border-color: var(--white);
-      color: var(--white);
+      color: var(--black);
+      background: var(--white);
+    }
+
+    .video-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.9em;
+      margin-top: 2.5em;
+      width: 100%;
+    }
+
+    .video-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(240, 236, 228, 0.35);
+    }
+
+    .video-frame {
+      display: block;
+      width: 100%;
+      max-width: 480px;
+      aspect-ratio: 16 / 9;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(240, 236, 228, 0.1);
+    }
+
+    .video-frame iframe {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
 
     /* ── SOCIALS ── */
@@ -358,15 +412,6 @@
     }
 
 
-    .iphone-home {
-      width: 80px;
-      height: 4px;
-      background: #333;
-      border-radius: 4px;
-      margin: 10px auto 0;
-    }
-
-
     /* ── TERRAZZA OVERLAY ── */
     #terrazza-overlay {
       position: fixed;
@@ -428,6 +473,62 @@
       color: rgba(240, 236, 228, 0.3);
     }
 
+    /* ── ABOUT OVERLAY ── */
+    #about-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--black);
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 6rem 2rem 4rem;
+      overflow-y: auto;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+
+    #about-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #about-overlay .lyrics-title {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s ease 0.2s, transform 0.7s cubic-bezier(0.16,1,0.3,1) 0.2s;
+    }
+
+    #about-overlay.open .lyrics-title {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .about-body {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 0.7s ease 0.4s, transform 0.7s cubic-bezier(0.16,1,0.3,1) 0.4s;
+    }
+
+    #about-overlay.open .about-body {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .about-body p {
+      text-align: center;
+    }
+
+    .about-body p:first-child {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.2rem, 3vw, 1.5rem);
+      color: var(--white);
+      margin-bottom: 2em;
+    }
+
     @keyframes fadeIn { to { opacity: 1; } }
   </style>
 </head>
@@ -438,11 +539,12 @@
   <h1 class="wordmark" id="wordmark">lamyna</h1>
 
   <nav>
+    <a href="#" class="nav-link" onclick="openAbout(); return false;">about</a>
     <div class="nav-dropdown">
       <span class="nav-label">canzoni</span>
       <div class="dropdown-menu">
         <a href="#" onclick="openLyrics(); return false;">letto</a>
-        <a href="#" onclick="openTerrazza(); return false;">terrazza</a>
+        <a href="#" onclick="openTerrazza(); return false;">limonata</a>
       </div>
     </div>
   </nav>
@@ -464,11 +566,21 @@
     <div class="bio-text">
       <p>non sapevo come dirlo.</p>
       <p>quindi ci ho scritto una canzone.</p>
-      <p class="presave-block">
+      <span class="presave-block">
         <span class="single-title">letto</span>
-        <span class="single-sub">il mio primo singolo — fuori il 19 giugno</span>
-        <a class="presave-btn" href="https://distrokid.com/hyperfollow/lamyna/letto?ref=release" target="_blank" rel="noopener">pre-save</a>
-      </p>
+        <span class="single-sub">il mio primo singolo — fuori ora</span>
+        <span class="platform-links">
+          <a href="https://open.spotify.com/track/5aOsMUXIbp74FcpbbNqcQQ" target="_blank" rel="noopener">Spotify</a>
+          <a href="https://music.apple.com/it/album/letto-single/6772008137" target="_blank" rel="noopener">Apple Music</a>
+          <a href="https://music.amazon.it/albums/B0H2L55GLV" target="_blank" rel="noopener">Amazon Music</a>
+        </span>
+        <span class="video-block">
+          <span class="video-label">visual video</span>
+          <span class="video-frame">
+            <iframe src="https://www.youtube-nocookie.com/embed/ztls1XCXU1I" title="lamyna — letto (official visualizer)" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+          </span>
+        </span>
+      </span>
     </div>
   </section>
 
@@ -639,9 +751,19 @@
       document.body.style.overflow = '';
     }
 
+    function openAbout() {
+      document.getElementById('about-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeAbout() {
+      document.getElementById('about-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
     // Close with Escape key
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { closeLyrics(); closeTerrazza(); }
+      if (e.key === 'Escape') { closeLyrics(); closeTerrazza(); closeAbout(); }
     });
 
   </script>
@@ -651,16 +773,96 @@
     <button class="lyrics-close" onclick="closeLyrics()">chiudi</button>
     <h2 class="lyrics-title">letto</h2>
     <div class="lyrics-body">
+      <p>
+        Sono su questo letto a pensare<br>
+        Come fa questo tempo a volare<br>
+        Così
+      </p>
+      <p>
+        Ricordo come fosse ieri<br>
+        Il mio arrivo qui in città<br>
+        Tra ansia e felicità
+      </p>
+      <p>
+        Quando ho varcato le porte del pensio<br>
+        E ricordo il primo giorno in uni<br>
+        Seduto in seconda fila, tra i miei compagni<br>
+        Dove tra esami e gaussiana<br>
+        Con loro ho costruito la mia prima "tana"
+      </p>
+      <p>
+        Passando per il secondo anno<br>
+        Qualcosa si è rotto dentro<br>
+        Un attacco di panico<br>
+        Che lentamente cambiò tutto
+      </p>
+      <p>
+        Un lutto<br>
+        Mia nonna che mi ha visto crescere<br>
+        E che mi accompagna da allora
+      </p>
+      <p>
+        Ma anche gioia<br>
+        Per aver conosciuto persone<br>
+        Che porto ancora oggi nel mio cuore
+      </p>
+      <p>
+        Poi un novembre qualunque<br>
+        Che mi ha spezzato in due<br>
+        Una colpa che ho tenuto dentro<br>
+        Finché non sono caduto<br>
+        In una spirale buia<br>
+        Da cui non vedevo uscita<br>
+        Finché qualcuno mi ha teso la mano
+      </p>
+      <p>
+        Poi pian piano sono tornato a galla<br>
+        Ho scoperto chi sono<br>
+        Ho accettato per la prima volta<br>
+        E ho corso più forte che mai
+      </p>
+      <p>
+        È il 21 novembre<br>
+        Con il cuore che mi scoppia<br>
+        Salgo su quel palco<br>
+        A prendere quel foglio di carta<br>
+        Che mi rende fiero di me stesso<br>
+        Come non lo ero mai stato prima<br>
+        Ci sono i miei cari con me<br>
+        Con gli occhi lucidi come i miei
+      </p>
+      <p>
+        Sono qui<br>
+        Su questo letto che mi conosce<br>
+        Ricordo ogni pianto<br>
+        Il peso, la gioia, le persone<br>
+        Penso a quello che ho<br>
+        E dove sono adesso<br>
+        Grato alla vita
+      </p>
     </div>
   </div>
 
   <!-- Lyrics overlay: terrazza (coming soon) -->
   <div id="terrazza-overlay">
     <button class="lyrics-close" onclick="closeTerrazza()">chiudi</button>
-    <h2 class="lyrics-title">terrazza</h2>
+    <h2 class="lyrics-title">limonata</h2>
     <div class="coming-soon">
       <p>soon</p>
       <span>due amici e una terrazza vista mare</span>
+    </div>
+  </div>
+
+  <!-- About overlay -->
+  <div id="about-overlay">
+    <button class="lyrics-close" onclick="closeAbout()">chiudi</button>
+    <h2 class="lyrics-title">about</h2>
+    <div class="lyrics-body about-body">
+      <p>Sono Lamyna.</p>
+      <p>Per gran parte della mia vita sono stato un ragazzo riservato. Avevo paura di parlare, di essere giudicato, di prendere troppo spazio.</p>
+      <p>Poi ho capito una cosa: quello che tieni dentro pesa solo finché resta dentro. Nel momento in cui lo lasci uscire — in una parola, in una melodia — smette di essere un peso e diventa qualcosa che puoi condividere.</p>
+      <p>Scrivo per questo. Per ricordare a me stesso, e a chi ascolta, che anche nei momenti più bui quelli belli esistono. E che vale la pena tenerli stretti, soprattutto quelli.</p>
+      <p>lamyna è il posto dove metto tutto questo.</p>
     </div>
   </div>
 
